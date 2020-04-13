@@ -1,0 +1,15 @@
+*.jar
+*.war
+
+*.log
+
+# Compiled class file
+*.class
+
+target/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
