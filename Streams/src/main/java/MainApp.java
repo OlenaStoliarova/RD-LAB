@@ -1,8 +1,10 @@
 import java.text.Collator;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class MainApp {
 
@@ -24,10 +26,8 @@ public class MainApp {
         return IntStream
                 .rangeClosed(1, names.size())
                 .filter(i -> i % 2 != 0)
-                .boxed()
-                .map(i -> "" + i + "." + names.get(i - 1))
-                .reduce((a, b) -> a + "," + b)
-                .orElse("");
+                .mapToObj(i -> String.format("%d.%s", i, names.get(i - 1)))
+                .collect(Collectors.joining(", "));
     }
 
 
@@ -69,8 +69,7 @@ public class MainApp {
         return Arrays.stream(lists)
                 .flatMap(Collection::stream)
                 .map(Object::toString)
-                .reduce((a, b) -> a + "," + b)
-                .orElse("");
+                .collect(Collectors.joining(","));
     }
 
 
@@ -95,21 +94,30 @@ public class MainApp {
 
     static <T> Stream<T> zip(Stream<T> first, Stream<T> second) {
         Iterator<T> firstIter = first.iterator();
+        Iterator<T> secondIter = second.iterator();
+
+        Iterable<Stream<T>> iter = () -> new Iterator<Stream<T>>() {
+            @Override
+            public boolean hasNext() {
+                return firstIter.hasNext() && secondIter.hasNext();
+            }
+
+            @Override
+            public Stream<T> next() {
+                return Stream.of(firstIter.next(), secondIter.next());
+            }
+        };
+
+        return StreamSupport.stream(iter.spliterator(), false)
+                .flatMap(Function.identity());
+    }
+
+
+    static <T> Stream<T> zipMy(Stream<T> first, Stream<T> second) {
+        Iterator<T> firstIter = first.iterator();
 
         return second.filter(s -> firstIter.hasNext())
                 .map(s -> Arrays.asList(firstIter.next(), s))
-                .flatMap(Collection::stream);
-    }
-
-    static <T> Stream<T> zip2(Stream<T> first, Stream<T> second) {
-
-        List<T> firstList = first.collect(Collectors.toList());
-        List<T> secondList = second.collect(Collectors.toList());
-        int size = Math.min(firstList.size(), secondList.size());
-
-        return IntStream.range(0, size)
-                .boxed()
-                .map(i -> Arrays.asList(firstList.get(i), secondList.get(i)))
                 .flatMap(Collection::stream);
     }
 }
